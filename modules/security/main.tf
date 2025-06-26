@@ -20,6 +20,15 @@ resource "aws_security_group" "apollo_sg" {
     protocol    = "tcp"
     cidr_blocks = var.ingress_cidr_blocks
   }
+
+  ingress {
+    description = "Permitir acceso a Kibana"
+    from_port   = 5601
+    to_port     = 5601
+    protocol    = "tcp"
+    cidr_blocks = var.kibana_ingress_cidr_blocks
+  }
+
   egress {
     from_port   = 0
     to_port     = 0

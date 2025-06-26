@@ -1,0 +1,7 @@
+.terraform
+.terraform.lock.hcl
+.terraform.*
+terraform.tfstate*
+modules/llave/id_rsa
+packer/files/dist
+packer/files/node_modules

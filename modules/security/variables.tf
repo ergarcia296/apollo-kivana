@@ -12,3 +12,9 @@ variable "ingress_cidr_blocks" {
   type        = list(string)
   default     = ["0.0.0.0/0"]
 }
+
+variable "kibana_ingress_cidr_blocks" {
+  description = "Lista de CIDR blocks permitidos para acceder a Kibana (puerto 5601)"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}

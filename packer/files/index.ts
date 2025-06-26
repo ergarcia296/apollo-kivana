@@ -1,3 +1,10 @@
+import apm from 'elastic-apm-node';
+apm.start({
+  serviceName: 'apollo-server',
+  serverUrl: 'http://localhost:8200',
+  environment: 'development',
+});
+
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 
@@ -34,11 +41,22 @@ const books = [
 // This resolver retrieves books from the "books" array above.
 const resolvers = {
   Query: {
-    books: () => books,
+    books: async (_, __, contextValue) => {
+      const transaction = apm.currentTransaction;
+      const span = apm.startSpan('books resolver');
+
+      try {
+        // Simular algo de lógica
+        const result = books;
+        return result;
+      } finally {
+        if (span) span.end();
+        if (transaction) transaction.setOutcome('success');
+      }
+    },
   },
 };
-// The ApolloServer constructor requires two parameters: your schema
-// definition and your set of resolvers.
+
 const server = new ApolloServer({
   typeDefs,
   resolvers,
