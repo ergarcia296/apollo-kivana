@@ -20,7 +20,9 @@ source "amazon-ebs" "ubuntu" {
     most_recent = true
     owners      = ["099720109477"]
   }
-  ssh_username = "ubuntu"
+  ssh_username         = "ubuntu"
+  ssh_keypair_name     = "MEAN_key"
+  ssh_private_key_file = "./modules/llave/id_rsa"
 }
 # AMI para Apollo Server
 build {
@@ -34,7 +36,8 @@ build {
   }
   provisioner "shell" {
     inline = [
-      "sudo apt-get update -y",
+      "sudo rm -rf /var/lib/apt/lists/*",
+      "sleep 10 && sudo apt-get update -y",
       "cd ~",
       "curl -sL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh",
       "sudo bash nodesource_setup.sh",
