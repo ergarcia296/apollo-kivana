@@ -1,3 +1,9 @@
+import apm from 'elastic-apm-node';
+apm.start({
+  serviceName: 'apollo-server',
+  serverUrl: 'http://localhost:8200',
+});
+
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 
