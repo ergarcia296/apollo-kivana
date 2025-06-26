@@ -59,6 +59,31 @@ Infraestructura como código para desplegar una arquitectura MEAN (MongoDB, Expr
 
 ---
 
+## Cómo recompilar el AMI con el código actualizado
+
+1. Compila el código TypeScript:
+   ```sh
+   cd packer/files
+   npm install
+   npm run compile
+   ```
+
+2. Regresa al directorio raíz del proyecto y ejecuta Packer para crear una nueva imagen AMI:
+   ```sh
+   cd ../..
+   packer build ./packer/main.pkr.hcl
+   ```
+
+3. Aplica los cambios con Terraform para que la nueva VM use el AMI más reciente:
+   ```sh
+   terraform plan
+   terraform apply
+   ```
+
+Esto asegura que la próxima instancia EC2 creada usará el código actualizado.
+
+---
+
 ## Notas importantes
 
 - Si tienes problemas con la red o la caché de paquetes en la creación de la AMI, el provisioner de Packer ya incluye limpieza y un delay para robustecer la instalación.
