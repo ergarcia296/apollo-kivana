@@ -57,6 +57,31 @@ resource "aws_instance" "web_server_1" {
   }
   user_data = <<-EOF
     #!/bin/bash
+    # Actualizar e instalar dependencias
+    apt-get update
+    apt-get install -y wget gnupg apt-transport-https openjdk-11-jdk curl
+
+    # Agregar repo de Elastic 7.x
+    wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
+    echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" > /etc/apt/sources.list.d/elastic-7.x.list
+
+    apt-get update
+    apt-get install -y elasticsearch=7.17.18
+
+    # Configurar Elasticsearch
+    echo "network.host: 0.0.0.0" >> /etc/elasticsearch/elasticsearch.yml
+    echo "discovery.type: single-node" >> /etc/elasticsearch/elasticsearch.yml
+
+    # Aumentar límite de memoria virtual requerido
+    sysctl -w vm.max_map_count=262144
+    echo "vm.max_map_count=262144" >> /etc/sysctl.conf
+
+    # Habilitar e iniciar Elasticsearch
+    systemctl daemon-reload
+    systemctl enable elasticsearch
+    systemctl start elasticsearch
+
+    # Configurar Apollo como servicio
     chown -R ubuntu:ubuntu /home/ubuntu/graphql-server-example
     chmod -R u+rwX /home/ubuntu/graphql-server-example
     cat <<EOL > /etc/systemd/system/apollo.service
@@ -70,7 +95,6 @@ resource "aws_instance" "web_server_1" {
     WorkingDirectory=/home/ubuntu/graphql-server-example
     ExecStart=/usr/bin/npm start
     Restart=always
-    Environment=NODE_ENV=production
 
     [Install]
     WantedBy=multi-user.target
