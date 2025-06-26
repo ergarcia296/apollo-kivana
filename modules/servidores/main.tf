@@ -47,7 +47,7 @@ resource "aws_eip" "web_server_eip_1" {
 # Terraform Resource Block - To Build EC2 instance in Public Subnet
 resource "aws_instance" "web_server_1" {
   ami           = data.aws_ami.apollo.id
-  instance_type = "t2.micro"
+  instance_type = "t3.medium"
   key_name      = var.key_name
 
   network_interface {
