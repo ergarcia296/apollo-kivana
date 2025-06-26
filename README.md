@@ -98,3 +98,15 @@ Esto mostrará todos los recursos que se crearán/modificarán sin aplicar cambi
 ---
 
 ¿Dudas? Abre un issue o revisa los módulos para más detalles.
+
+---
+
+## Acceso a Apollo Server
+
+Una vez desplegada la instancia EC2, puedes acceder a Apollo Server visitando la IP pública de la instancia en el puerto 4000:
+
+```
+http://<IP_PUBLICA_EC2>:4000/
+```
+
+Si todo está correcto, Apollo Server debería estar funcionando y accesible en esa dirección.
