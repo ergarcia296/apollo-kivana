@@ -5,7 +5,7 @@ data "aws_ami" "apollo" {
   most_recent = true
   filter {
     name   = "name"
-    values = ["ami-apollo"]
+    values = ["ami-apollo-*"]
   }
   filter {
     name   = "virtualization-type"

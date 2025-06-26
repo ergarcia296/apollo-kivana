@@ -9,7 +9,7 @@ packer {
 }
 source "amazon-ebs" "ubuntu" {
   ami_name      = "ami-apollo-{{timestamp}}"
-  instance_type = "t2.micro"
+  instance_type = "t3.medium"
   region        = "us-east-1"
   source_ami_filter {
     filters = {
