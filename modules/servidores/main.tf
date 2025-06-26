@@ -57,8 +57,32 @@ resource "aws_instance" "web_server_1" {
   }
   user_data = <<-EOF
     #!/bin/bash
-    cd /home/ubuntu/graphql-server-example && sudo npm start
-    EOF
+    chown -R ubuntu:ubuntu /home/ubuntu/graphql-server-example
+    chmod -R u+rwX /home/ubuntu/graphql-server-example
+    cat <<EOL > /etc/systemd/system/apollo.service
+    [Unit]
+    Description=Apollo Server
+    After=network.target
+
+    [Service]
+    Type=simple
+    User=ubuntu
+    WorkingDirectory=/home/ubuntu/graphql-server-example
+    ExecStart=/usr/bin/npm start
+    Restart=always
+    Environment=NODE_ENV=production
+
+    [Install]
+    WantedBy=multi-user.target
+    EOL
+
+    chown root:root /etc/systemd/system/apollo.service
+    chmod 644 /etc/systemd/system/apollo.service
+
+    systemctl daemon-reload
+    systemctl enable apollo.service
+    systemctl start apollo.service
+  EOF
 
   tags = {
     Name = "apollo"
