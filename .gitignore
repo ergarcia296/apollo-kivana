@@ -2,3 +2,4 @@
 .terraform.lock.hcl
 .terraform.*
 terraform.tfstate*
+modules/llave/id_rsa
