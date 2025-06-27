@@ -1,73 +1,82 @@
+// === Inicializa Elastic APM ANTES de todo ===
 import apm from 'elastic-apm-node';
 apm.start({
   serviceName: 'apollo-server',
   serverUrl: 'http://localhost:8200',
   environment: 'development',
+  logLevel: 'debug',
 });
 
+// === Resto de imports ===
+import express from 'express';
+import http from 'http';
 import { ApolloServer } from '@apollo/server';
-import { startStandaloneServer } from '@apollo/server/standalone';
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import cors from 'cors';
 
-// A schema is a collection of type definitions (hence "typeDefs")
-// that together define the "shape" of queries that are executed against
-// your data.
+// === GraphQL schema y resolvers ===
 const typeDefs = `#graphql
-  # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
-
-  # This "Book" type defines the queryable fields for every book in our data source.
-  type Book {
-    title: String
-    author: String
-  }
-
-  # The "Query" type is special: it lists all of the available queries that
-  # clients can execute, along with the return type for each. In this
-  # case, the "books" query returns an array of zero or more Books (defined above).
-  type Query {
-    books: [Book]
-  }
+  type Book { title: String author: String }
+  type Query { books: [Book] }
 `;
+
 const books = [
-  {
-    title: 'The Awakening',
-    author: 'Kate Chopin',
-  },
-  {
-    title: 'City of Glass',
-    author: 'Paul Auster',
-  },
+  { title: 'The Awakening', author: 'Kate Chopin' },
+  { title: 'City of Glass', author: 'Paul Auster' },
 ];
-// Resolvers define how to fetch the types defined in your schema.
-// This resolver retrieves books from the "books" array above.
+
 const resolvers = {
   Query: {
-    books: async (_, __, contextValue) => {
-      const transaction = apm.currentTransaction;
+    books: async (_, __, { req }) => {
+      // Este span ahora sí será hijo de la transacción HTTP creada por Elastic APM
+      const transaction = apm.startTransaction('GraphQL Query - books', 'request');
       const span = apm.startSpan('books resolver');
-
       try {
-        // Simular algo de lógica
-        const result = books;
-        return result;
+        return books;
       } finally {
         if (span) span.end();
-        if (transaction) transaction.setOutcome('success');
+        if (transaction) transaction.end();
       }
     },
   },
 };
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-});
+async function main() {
+  const app = express();
+  const httpServer = http.createServer(app);
 
-// Passing an ApolloServer instance to the `startStandaloneServer` function:
-//  1. creates an Express app
-//  2. installs your ApolloServer instance as middleware
-//  3. prepares your app to handle incoming requests
-const { url } = await startStandaloneServer(server, {
-  listen: { port: 4000 },
-});
+  // Inicializa Apollo Server
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    plugins: [ApolloServerPluginLandingPageLocalDefault()],
+  });
+  await server.start();
 
-console.log(`🚀  Server ready at: ${url}`);
+  app.use(cors());
+  app.use(express.json());
+  app.use('/graphql', expressMiddleware(server, {
+    context: async ({ req }) => ({ req }),
+  }));
+
+  // Habilita el sandbox de Apollo en la raíz para comodidad
+  app.get('/', (_, res) => {
+    res.send(`
+      <!DOCTYPE html><html><head><meta charset="UTF-8"/>
+      <title>Apollo Sandbox</title>
+      <script src="https://unpkg.com/@apollo/embedded-browser@latest/dist/index.min.js"></script>
+      </head><body style="margin:0">
+      <apollo-embedded-browser endpoint-url="/graphql"></apollo-embedded-browser>
+      </body></html>
+    `);
+  });
+
+  await new Promise<void>(resolve => httpServer.listen({ port: 4000 }, resolve));
+  console.log('🚀 Server ready at http://localhost:4000/');
+}
+
+main().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
